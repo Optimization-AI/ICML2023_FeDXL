@@ -1,0 +1,30 @@
+#!/bin/bash
+
+#NECESSARY JOB SPECIFICATIONS
+#SBATCH --job-name=pauc       #Set the job name 
+#SBATCH --time=4:00:00        #Set the wall clock limit to 4hrs 
+#SBATCH --ntasks-per-node=4              
+#SBATCH --nodes=4
+#SBATCH --mem=64gb            #Request 64GB Memory per node
+#SBATCH --output=pauc.%j      #stdout/err 
+#SBATCH --gres=gpu:1          #Request 1 GPU per node 
+#SBATCH --partition=gpu       #Request the GPU partition/queue
+
+export MASTER_PORT=12381
+export WORLD_SIZE=16
+
+echo "NODELIST="${SLURM_NODELIST}
+master_addr=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
+export MASTER_ADDR=$master_addr
+echo "MASTER_ADDR="$MASTER_ADDR
+
+#First Executable Line
+# module load CUDA/11.3.1
+module load Anaconda3/2021.11
+source ~/.bashrc
+conda activate YOUR-CONDA-ENVIROMENT
+srun python3 main.py --OPAUC=1 --ce=0 --tau=2  --I=32 --lr=0.2 \
+                     --B1=32 --B2=32 --gamma=0.1 --noise_std=0.2\
+                     --data=chestmnist --pos_class=1 --class_index=4
+
+
